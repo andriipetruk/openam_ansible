@@ -1,0 +1,22 @@
+mantl_openam_image: andriipetruk/mantl-openam
+mantl_openam_image_tag: latest
+import_cert: /etc/pki/tls/certs/host.cert
+import_key: /etc/pki/tls/private/host.key
+pkcs12: /etc/pki/host.p12
+keystore: /etc/pki/keystore
+keystore_pass: df34s234A
+openam_cfg_dir: /etc/openam
+openam_cookie_domain: .cisco.com
+openam_fqdn: mantlam01.cisco.com
+openam_server_port: 8081
+openam_config_base: http://{{openam_fqdn}}:{{openam_server_port}}
+install_root: /root
+amadmin_password: password
+amldapuser_password: secret123
+opendj_basedn: dc=example,dc=com
+opendj_password: password
+opendj_host: mantlam01.cisco.com
+opendj_dirmgr: cn=Directory Manager
+opendj_ldap_port: 1389
+opendj_admin_port: -1
+opendj_jmx_port: -1

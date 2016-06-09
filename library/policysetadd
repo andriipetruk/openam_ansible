@@ -1,0 +1,134 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+
+import urllib
+import requests
+import threading
+import os
+from ansible.module_utils.basic import *
+
+
+
+DOCUMENTATION = '''
+---
+module: policysetsadd
+version_added: "0.1"
+author: Andrii Petruk andrey.petruk@gmail.com
+short_description: Configure OpenAM Policy Set.
+description:
+   - This module provide configuration OpenAm Policyi Set.
+options:
+  openam_url:
+    description:
+      - URL to the web container where you want OpenAM to run, such as http://openam.example.com:8080.
+    required: true
+'''
+
+EXAMPLES = '''
+'''
+
+class AMConnection:
+    def __init__(self, url, admin, password):
+        self.url = url
+        authheaders =  {"Content-type": "application/json",
+            "X-OpenAM-Username": admin ,
+            "X-OpenAM-Password": password}
+        authurl = url + "/json/authenticate"
+        r = requests.post(authurl, data="{}", headers=authheaders)
+        t = json.loads(r.text)
+        id =   t['tokenId']
+        r.close()
+        self.id = id
+
+def getResourceTypeUuid(openam,PolicySets):
+    url = openam.url + "/json/applications/"+PolicySets+"?_fields=resourceTypeUuids"
+    headers = {"iplanetDirectoryPro": openam.id }
+    response = requests.get(url, headers=headers)
+    data = response.json()
+    return data['resourceTypeUuids'][0]
+    response.close()
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            openam_url               = dict(default=None, required=True),
+            applicationname          = dict(default='iPlanetAMWebAgentService'),
+            openam_login             = dict(default=None, required=True),
+            openam_password          = dict(default=None, required=True),             
+            policy_name              = dict(default=None, required=True),
+            policy_description       = dict(default=None, required=True),
+            policy_actionvalues_get  = dict(default='true'),
+            policy_actionvalues_post  = dict(default='true'),
+            policy_actionvalues_head  = dict(default='true'),
+            policy_actionvalues_delete  = dict(default='true'),
+            policy_actionvalues_options  = dict(default='true'),
+            policy_actionvalues_put  = dict(default='true'),
+            policy_actionvalues_patch  = dict(default='true'),
+            policy_resources         = dict(default=None, required=True),
+            policy_subject_type      = dict(default=None, required=True),
+            policy_subject_values      = dict(default=None, required=True),
+            policy_active            = dict(default='true')),
+        supports_check_mode=True,
+    )
+
+    openam_url = module.params['openam_url']
+    applicationname = module.params['applicationname']
+    openam_login = module.params['openam_login']
+    openam_password = module.params['openam_password']
+    policy_name = module.params['policy_name']
+    policy_description = module.params['policy_description']
+    policy_actionvalues_get = module.params['policy_actionvalues_get']
+    policy_actionvalues_post = module.params['policy_actionvalues_post']
+    policy_actionvalues_head = module.params['policy_actionvalues_head']
+    policy_actionvalues_delete = module.params['policy_actionvalues_delete']
+    policy_actionvalues_options = module.params['policy_actionvalues_options']
+    policy_actionvalues_put = module.params['policy_actionvalues_put']
+    policy_actionvalues_patch = module.params['policy_actionvalues_patch']
+    policy_resources = module.params['policy_resources']
+    policy_subject_type = module.params['policy_subject_type']
+    policy_subject_values = module.params['policy_subject_values']
+    policy_active =  module.params['policy_active']
+    
+
+    openam = AMConnection(openam_url,openam_login,openam_password)
+    uuid = getResourceTypeUuid(openam, applicationname)
+
+
+    data = {
+        "active"            : policy_active.decode('utf8'),
+        "name"              : policy_name.decode('utf8'),
+        "description"       : policy_description.decode('utf8'),
+        "applicationName"   : applicationname.decode('utf8'),
+        "actionValues"      : {"GET": policy_actionvalues_get.decode('utf8'),
+                               "POST": policy_actionvalues_post.decode('utf8'),
+                               "HEAD": policy_actionvalues_head.decode('utf8'),
+                               "DELETE":policy_actionvalues_delete.decode('utf8'),
+                               "OPTIONS":policy_actionvalues_options.decode('utf8'),
+                               "PUT":policy_actionvalues_put.decode('utf8'),
+                               "PATCH":policy_actionvalues_patch.decode('utf8')},
+        "resources"         : [policy_resources.decode('utf8')],
+        "subject"           : { "type" : policy_subject_type.decode('utf8'),
+                              "subjectValues" : [ policy_subject_values.decode('utf8') ]},
+        "resourceTypeUuid"  : uuid.decode('utf8')   
+
+    }
+
+
+    url = openam.url + "/json/policies?_action=create"
+    headers = {"Content-type": "application/json",
+        "iplanetDirectoryPro": openam.id }
+    response = requests.post(url, json.dumps(data), headers=headers)
+    response.close()
+    openam_answer = response.json()
+   
+    try:
+      creationDate = openam_answer['creationDate'][0]
+    except KeyError:
+      creationDate = 0
+    if creationDate:
+        module.exit_json(changed=True, msg='OpenAM response: ' + response.text)
+    else:
+        module.fail_json(msg='Configuration failed! Response:' + response.text)
+
+main()

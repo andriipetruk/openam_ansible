@@ -1,0 +1,13 @@
+- name: restart mantl-nginxmodam
+  sudo: yes
+  service:
+    name: mantl-nginxmodam
+    state: restarted
+  tags:
+    - nginxsso
+
+- name: reload mantl-nginxmodam
+  sudo: yes
+  command: systemctl daemon-reload
+  tags:
+    - nginxsso

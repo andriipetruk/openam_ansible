@@ -1,0 +1,13 @@
+- name: restart mantl-opendj
+  sudo: yes
+  service:
+    name: mantl-opendj
+    state: restarted
+  tags:
+    - nginxsso
+
+- name: reload mantl-opendj
+  sudo: yes
+  command: systemctl daemon-reload
+  tags:
+    - nginxsso

@@ -1,0 +1,82 @@
+---
+- name: ensure mantl-openam docker image is present
+  sudo: yes
+  command: /usr/bin/docker pull {{ mantl_openam_image }}:{{ mantl_openam_image_tag }}
+  tags:
+    - nginxsso
+    - bootstrap
+
+- name: generate pkcs12 if not exist
+  sudo: yes
+  command: bash -lc  "/usr/bin/openssl pkcs12 -export -in {{ import_cert }} -inkey {{ import_key }} -out {{ pkcs12 }} -password pass:{{ keystore_pass }} -name tomcat" creates={{ pkcs12 }}
+
+- name: generate keystore if not exist
+  sudo: yes
+  command: bash -lc  "/usr/bin/keytool -importkeystore -deststorepass {{ keystore_pass }}  -destkeypass {{ keystore_pass }}  -destkeystore {{ keystore }}  -srckeystore {{ pkcs12 }}  -srcstoretype PKCS12 -srcstorepass {{ keystore_pass }} -alias tomcat" creates={{ keystore }}
+
+- name: create openam config directory
+  sudo: yes
+  file:
+    dest: "{{ openam_cfg_dir }}"
+    state: directory
+  tags:
+    - nginxsso
+
+- name: configure mantl-openam
+  sudo: yes
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - src: mantl-openam.service.j2
+      dest: /usr/lib/systemd/system/mantl-openam.service
+    - src: mantl-openam.env.j2
+      dest: /etc/default/mantl-openam.env
+  notify:
+    - reload mantl-openam
+    - restart mantl-openam
+  tags:
+    - nginxsso
+
+- name: enable mantl-openam
+  sudo: yes
+  service:
+    name: mantl-openam
+    enabled: yes
+    state: started
+  notify:
+    - restart mantl-openam
+  tags:
+    - nginxsso
+
+
+- name: Run ssoconfigure
+  ssoconfigure: server_url="{{openam_config_base}}"
+    deployment_uri="/openam"
+    base_dir="{{install_root}}/openam"
+    locale="en_US"
+    platform_locale="en_US"
+    admin_pwd="{{amadmin_password}}"
+    amldapuserpasswd="{{amldapuser_password}}"
+    cookie_domain="{{openam_cookie_domain}}"
+    data_store="dirServer"
+    directory_ssl="SIMPLE"
+    directory_server="{{opendj_host}}"
+    directory_port="{{opendj_ldap_port}}"
+    directory_admin_port="{{opendj_admin_port}}"
+    directory_jmx_port="{{opendj_jmx_port}}"
+    root_suffix="{{opendj_basedn}}"
+    ds_dirmgrdn="{{opendj_dirmgr}}"
+    ds_dirmgrpasswd="{{opendj_password}}"
+    userstore_type="LDAPv3ForOpenDS"
+    userstore_ssl="SIMPLE"
+    userstore_host="{{opendj_host}}"
+    userstore_port="{{opendj_ldap_port}}"
+    userstore_suffix="{{opendj_basedn}}"
+    userstore_mgrdn="{{opendj_dirmgr}}"
+    userstore_passwd="{{opendj_password}}"
+    lb_site_name="sitea"
+    lb_primary_url="{{openam_config_base}}/openam"
+    am_enc_key="AQICY6Za5J5noktyqnhW10JiPVNUdKuiZYwS"
+    acceptlicense="true"
+

@@ -1,0 +1,13 @@
+- name: restart mantl-openam
+  sudo: yes
+  service:
+    name: mantl-openam
+    state: restarted
+  tags:
+    - nginxsso
+
+- name: reload mantl-openam
+  sudo: yes
+  command: systemctl daemon-reload
+  tags:
+    - nginxsso

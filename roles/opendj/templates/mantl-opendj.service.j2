@@ -1,0 +1,28 @@
+[Unit]
+Description=mantl-opendj
+After=docker.service
+After=consul.service
+Requires=docker.service
+Requires=consul.service
+
+[Service]
+Restart=on-failure
+RestartSec=20
+TimeoutStartSec=0
+
+ExecStartPre=-/usr/bin/docker rm -f mantl-opendj
+ExecStartPre=-/usr/bin/docker pull {{ mantl_opendj_image }}:{{ mantl_opendj_image_tag }}
+
+ExecStart=/usr/bin/docker run \
+    --rm \
+    --name=mantl-opendj \
+    --env-file=/etc/default/mantl-opendj.env \
+    -p 1389:1389 \
+    -p 1636:1636 \
+    -p 4444:4444 \
+    {{ mantl_opendj_image }}:{{ mantl_opendj_image_tag }}
+
+ExecStop=/usr/bin/docker kill mantl-opendj
+
+[Install]
+WantedBy=multi-user.target

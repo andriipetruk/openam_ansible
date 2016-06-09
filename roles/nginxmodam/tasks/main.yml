@@ -1,0 +1,51 @@
+---
+- name: ensure mantl-nginxmodam docker image is present
+  sudo: yes
+  command: /usr/bin/docker pull {{ mantl_nginxmodam_image }}:{{ mantl_nginxmodam_image_tag }}
+  tags:
+    - nginxsso
+    - bootstrap
+
+- name: create nginxmodam config directory
+  sudo: yes
+  file:
+    dest: "{{ nginxmodam_cfg_dir }}"
+    state: directory
+  tags:
+    - nginxsso
+
+- name: disable mantlui
+  sudo: yes
+  service:
+    name: mantlui
+    enabled: no
+    state: stopped
+
+- name: configure mantl-nginxmodam
+  sudo: yes
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - src: mantl-nginxmodam.service.j2
+      dest: /usr/lib/systemd/system/mantl-nginxmodam.service
+    - src: mantl-nginxmodam.env.j2
+      dest: /etc/default/mantl-nginxmodam.env
+    - src: mantl-nginxmodam.conf.j2
+      dest: /etc/mantl-nginxmodam/nginx.conf 
+  notify:
+    - reload mantl-nginxmodam
+    - restart mantl-nginxmodam
+  tags:
+    - nginxsso
+
+- name: enable mantl-nginxmodam
+  sudo: yes
+  service:
+    name: mantl-nginxmodam
+    enabled: yes
+    state: started
+  notify:
+    - restart mantl-nginxmodam
+  tags:
+    - nginxsso

@@ -1,0 +1,14 @@
+
+- name: Add test policy Set
+  policysetadd: openam_url="{{openam_url}}"
+    openam_login="{{openam_login}}"
+    openam_password="{{openam_password}}"
+    policy_name="{{policy_name}}"
+    policy_description="{{policy_description}}"
+    policy_resources="{{policy_resources}}"
+    policy_subject_type="{{policy_subject_type}}"
+    policy_subject_values="{{policy_subject_values}}"
+
+    
+    
+

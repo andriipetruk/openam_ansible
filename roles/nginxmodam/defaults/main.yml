@@ -1,0 +1,8 @@
+mantl_nginxmodam_image: andriipetruk/nginxmodam-mantlui
+mantl_nginxmodam_image_tag: latest
+mantlui_host: mantlctr01.cisco.com
+mantlui_port: 443
+mantlui_loginpass: YWRtaW46cmVkaGF0
+openam: http://mantl-openam:8080/openam
+nginxmodam_cfg_dir: /etc/mantl-nginxmodam
+agent_pass: testpass

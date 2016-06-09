@@ -1,0 +1,16 @@
+openam_fqdn: mantlam01.cisco.com
+openam_server_port: 8081
+openam_deploy: openam
+openam_url: http://{{openam_fqdn}}:{{openam_server_port}}/{{openam_deploy}}
+openam_password: redhatpass
+openam_login: amadmin
+policy_name: test
+policy_description: test policy
+policy_resources: "'http://mantlctr01.cisco.com:80/mesos/*','https://cisco.com:443/test/*'"
+policy_subject_type: Identity
+policy_subject_values:  "uid=demo,ou=People,dc=example,dc=com"
+openamagent_login: webagenttest
+openamagent_password: test123
+openamagent_fqdn: www.cisco.com
+openamagent_prefix: https
+openamagent_port: 443

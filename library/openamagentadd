@@ -1,0 +1,111 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+
+import urllib
+import requests
+import threading
+import os
+from ansible.module_utils.basic import *
+
+
+
+DOCUMENTATION = '''
+---
+module: openamagentadd
+version_added: "0.1"
+author: Andrii Petruk andrey.petruk@gmail.com
+short_description: Create agent in OpenAM .
+description:
+   - This module provide creation agent in OpenAm.
+options:
+  openam_url:
+    description:
+      - URL to the web container where you want OpenAM to run, such as http://openam.example.com:8080.
+    required: true
+'''
+
+EXAMPLES = '''
+'''
+
+class AMConnection:
+    def __init__(self, url, admin, password):
+        self.url = url
+        authheaders =  {"Content-type": "application/json",
+            "X-OpenAM-Username": admin ,
+            "X-OpenAM-Password": password}
+        authurl = url + "/json/authenticate"
+        r = requests.post(authurl, data="{}", headers=authheaders)
+        t = json.loads(r.text)
+        id =   t['tokenId']
+        r.close()
+        self.id = id
+
+
+def main():
+    module = AnsibleModule(
+        argument_spec=dict(
+            openam_url               = dict(default=None, required=True),
+            openam_login             = dict(default=None, required=True),
+            openam_password          = dict(default=None, required=True),
+            openamagent_login        = dict(default=None, required=True),
+            openamagent_password     = dict(default=None, required=True),             
+            openamagent_fqdn         = dict(default=None, required=True),
+            openamagent_location     = dict(default='centralized'),
+            openamagent_type         = dict(default='WebAgent'),
+            openamagent_prefix       = dict(default=None, required=True),
+            openamagent_port         = dict(default=None, required=True ),
+            openamagent_status       = dict(default='Active')),
+        supports_check_mode=True,
+    )
+
+    openam_url = module.params['openam_url']
+    openam_login = module.params['openam_login']
+    openam_password = module.params['openam_password']
+    openamagent_login = module.params['openamagent_login']
+    openamagent_password = module.params['openamagent_password']
+    openamagent_fqdn = module.params['openamagent_fqdn']
+    openamagent_type = module.params['openamagent_type']
+    openamagent_location = module.params['openamagent_location']
+    openamagent_prefix = module.params['openamagent_prefix']
+    openamagent_port = module.params['openamagent_port']
+    openamagent_status =  module.params['openamagent_status']
+    openamagent_url = openamagent_prefix+'://'+openamagent_fqdn+':'+openamagent_port+'/'
+    openamagent_login_url = '[0]='+openam_url+'/UI/Login'
+    openamagent_logout_url = '[0]='+openam_url+'/UI/Logout'
+
+    openam = AMConnection(openam_url,openam_login,openam_password)
+
+
+    data = {
+        "username": openamagent_login.decode('utf8'),
+        "com.sun.identity.agents.config.fqdn.default": [ openamagent_fqdn.decode('utf8') ],
+        "com.sun.identity.agents.config.repository.location": [ openamagent_location.decode('utf8') ],
+        "agenttype"   : [ openamagent_type.decode('utf8') ],
+        "serverurl"   : [ openam_url.decode('utf8') ],
+        "agenturl"    : [ openamagent_url.decode('utf8') ],
+        "userpassword" :  [ openamagent_password.decode('utf8') ],
+        "com.sun.identity.agents.config.login.url" : [ openamagent_login_url.decode('utf8') ],
+        "com.sun.identity.agents.config.logout.url" : [openamagent_logout_url.decode('utf8') ],
+        "sunidentityserverdevicestatus" : [ openamagent_status.decode('utf8')]
+    }
+
+
+    url = openam.url + "/json/agents/?_action=create"
+    headers = {"Content-type": "application/json",
+        "iplanetDirectoryPro": openam.id }
+    response = requests.post(url, json.dumps(data), headers=headers)
+    response.close()
+    openam_answer = response.json()
+  
+
+    try:
+      test = openam_answer['username'][0]
+    except KeyError:
+      creationDate = 0
+    if test:
+        module.exit_json(changed=True, msg='OpenAM response: ' + response.text)
+    else:
+        module.fail_json(msg='Configuration failed! Response:' + response.text)
+
+main()

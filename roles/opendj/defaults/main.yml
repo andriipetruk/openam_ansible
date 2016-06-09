@@ -1,0 +1,3 @@
+mantl_opendj_image: andriipetruk/mantl-opendj
+mantl_opendj_image_tag: ver0.1
+opendj_cfg_dir: /etc/opendj

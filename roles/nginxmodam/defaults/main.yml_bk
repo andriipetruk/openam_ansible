@@ -1,0 +1,6 @@
+mantl_nginxmodam_image: andriipetruk/mantl-nginxmodam
+mantl_nginxmodam_image_tag: v0.2
+protected_url: http://mantl-01-control-01:80
+openam: http://mantlam01.cisco.com:8081/openam
+nginxmodam_cfg_dir: /etc/mantl-nginxmodam
+agent_pass: testpass

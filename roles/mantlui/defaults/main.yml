@@ -1,0 +1,10 @@
+mantlui_nginx_image: andriipetruk/nginx-mantlui-sso
+mantlui_nginx_image_tag: rev1_57
+openam_url: http://mantl-openam:8080/openam
+openam_logout: http://mantlam01.cisco.com:8081/openam/XUI/#logout/
+openam_api : mantlam01.cisco.com:8081/openam
+agent_url: https://mantlctr01.cisco.com:443
+agent_name: WebAgent
+agent_pass: testpass
+do_mantlui_ssl: false
+do_mantlui_auth: false

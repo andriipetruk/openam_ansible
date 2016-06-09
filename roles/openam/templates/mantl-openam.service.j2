@@ -1,0 +1,30 @@
+[Unit]
+Description=mantl-openam
+After=docker.service
+After=consul.service
+Requires=docker.service
+Requires=consul.service
+
+[Service]
+Restart=on-failure
+RestartSec=20
+TimeoutStartSec=0
+
+ExecStartPre=-/usr/bin/docker rm -f mantl-openam
+ExecStartPre=-/usr/bin/docker pull {{ mantl_openam_image }}:{{ mantl_openam_image_tag }}
+
+ExecStart=/usr/bin/docker run \
+    --rm \
+    --name=mantl-openam \
+    --env-file=/etc/default/mantl-openam.env \
+    -p 8443:8443 \
+    -p 8081:8080 \
+    -v {{ keystore }}:/opt/server.keystore \
+    -v /dev/urandom:/dev/random \
+    -v {{ openam_cfg_dir }}/config:/root \
+    {{ mantl_openam_image }}:{{ mantl_openam_image_tag }}
+
+ExecStop=/usr/bin/docker kill mantl-openam
+
+[Install]
+WantedBy=multi-user.target

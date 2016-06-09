@@ -1,0 +1,90 @@
+# nginx.conf for Policy Agent
+
+#daemon off;
+#user  nobody;
+worker_processes  1;
+
+error_log  logs/error.log;
+#error_log  logs/error.log  notice;
+#error_log  logs/error.log  info;
+#error_log  /dev/stdout debug_http;
+
+#pid        logs/nginx.pid;
+
+
+events {
+    worker_connections  1024;
+}
+
+
+http {
+
+   # enable reverse proxy
+        proxy_redirect              off;
+        proxy_set_header            Host            $http_host;
+        proxy_set_header            X-Real-IP       $remote_addr;
+        proxy_set_header            X-Forwared-For  $proxy_add_x_forwarded_for;
+	proxy_set_header 	    Authorization   "Basic {{mantlui_loginpass}}";
+
+    upstream streaming_mantlui 
+    {
+          server {{mantlui_host}}:{{mantlui_port}}; 
+    }
+
+    include       mime.types;
+    default_type  application/octet-stream;
+
+    #log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
+    #                  '$status $body_bytes_sent "$http_referer" '
+    #                  '"$http_user_agent" "$http_x_forwarded_for"';
+
+    #access_log  logs/access.log  main;
+
+    sendfile        on;
+    #tcp_nopush     on;
+
+    #keepalive_timeout  0;
+    keepalive_timeout  65;
+
+    #gzip  on;
+
+    am_boot_file "conf/OpenSSOAgentBootstrap.properties";
+    #am_conf_file "conf/OpenSSOAgentConfiguration.properties";
+
+    server {
+        listen 80;
+        return 301 https://$host$request_uri;
+    }
+
+    server {
+        listen       443 ssl;
+        server_name  localhost;
+
+        ssl_certificate     /etc/nginx/ssl/nginx.cert;
+        ssl_certificate_key	/etc/nginx/ssl/nginx.key;
+
+        ssl on;
+        ssl_session_cache         builtin:1000 shared:SSL:10m;
+        ssl_protocols             TLSv1 TLSv1.1 TLSv1.2;
+        ssl_ciphers               HIGH:!aNULL:!eNULL:!EXPORT:!CAMELLIA:!DES:!MD5:!PSK:!RC4;
+        ssl_prefer_server_ciphers on;
+
+        #charset koi8-r;
+
+        #access_log  logs/host.access.log  main;
+
+        location / {
+                  proxy_pass  https://streaming_mantlui;
+    }
+	#error_page  404              /404.html;
+
+        # redirect server error pages to the static page /50x.html
+        #
+        error_page   500 502 503 504  /50x.html;
+        location = /50x.html {
+            root   html;
+        }
+
+    }
+
+}

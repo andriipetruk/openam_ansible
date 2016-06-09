@@ -1,0 +1,11 @@
+#URL Protocol of OpenAM server. Eg - HTTP / HTTPS
+PROTOCOL=HTTP 
+#FQDN. Eg - openam.example.com
+OPENAM_SERVER=mantlam01.cisco.com
+#Server Port. Eg - 8080
+OPENAM_SERVER_PORT=8081
+
+MANTL_PREFIX=https
+MANTL_SERVER=mantlctr01.cisco.com
+MANTL_SERVER_PORT=443
+

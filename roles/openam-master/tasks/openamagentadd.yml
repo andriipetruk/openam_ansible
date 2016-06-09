@@ -1,0 +1,13 @@
+
+- name: Add agnet test
+  openamagentadd: openam_url="{{openam_url}}"
+    openam_login="{{openam_login}}"
+    openam_password="{{openam_password}}"
+    openamagent_login="{{openamagent_login}}"
+    openamagent_password="{{openamagent_password}}"
+    openamagent_fqdn="{{openamagent_fqdn}}"
+    openamagent_prefix="{{openamagent_prefix}}"
+    openamagent_port="{{openamagent_port}}"
+    
+    
+

@@ -1,0 +1,49 @@
+---
+- name: ensure mantl-opendj docker image is present
+  sudo: yes
+  command: /usr/bin/docker pull {{ mantl_opendj_image }}:{{ mantl_opendj_image_tag }}
+  tags:
+    - mantl-opendj
+    - bootstrap
+
+- name: create opendj config directory
+  sudo: yes
+  file:
+    dest: "{{ opendj_cfg_dir }}"
+    state: directory
+  tags:
+    - nginxsso
+
+- name: configure mantl-opendj
+  sudo: yes
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - src: mantl-opendj.service.j2
+      dest: /usr/lib/systemd/system/mantl-opendj.service
+    - src: mantl-opendj.env.j2
+      dest: /etc/default/mantl-opendj.env
+    - src: mantl-opendj.init.j2
+      dest: /etc/opendj/startopendj
+    - src: mantl-opendj.properties.j2
+      dest: /etc/opendj/opendj-install.properties
+    - src: mantl-opendj.ldif.j2
+      dest: /etc/opendj/example.ldif
+  notify:
+    - reload mantl-opendj
+    - restart mantl-opendj
+  tags:
+    - mantl-opendj
+
+
+- name: enable mantl-opendj
+  sudo: yes
+  service:
+    name: mantl-opendj
+    enabled: yes
+    state: started
+  notify:
+    - restart mantl-opendj
+  tags:
+    - mantl-opendj
